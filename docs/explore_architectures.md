@@ -29,7 +29,7 @@ When asked to find the newbie area, it was able to successfully do so.
 Next it was asked to level up to level 2. This caused the character to die a few times and the agent then paused asking if it should proceed or not.
 
 ### Technical Conclusions
-Agent SKill does work, but we'll need much more complex state, world and player management. We need auditable visibility for reporting token/usage and to review the player journey. We need a custom agentic loop that acts and spends less time asking.
+Agent Skill does work, but we'll need much more complex state, world and player management. We need auditable visibility for reporting token/usage and to review the player journey. We need a custom agentic loop that acts and spends less time asking.
 
 #### Additional notes:
 - Used /plugins and searched for skill-creator. Chose to install for local scope. Claude installed and enabled. Typed /skills and skill-creator was listed.
