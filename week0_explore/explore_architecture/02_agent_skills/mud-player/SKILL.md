@@ -1,6 +1,6 @@
 ---
 name: mud-player
-description: Play tbaMUD (a CircleMUD/DikuMUD-derived text adventure) running on localhost:4000 using the existing "dummy" character. Use this skill whenever the user asks to explore, play, log into, or interact with the MUD, the game on port 4000, tbaMUD, CircleMUD, or "the dummy character" — including requests like "go explore the mud," "level up my character," "see what's in the bakery," "fight some rats," or "check on the dummy account." Do not attempt to talk to the MUD with raw telnet/nc commands or one-off socket scripts — this skill's daemon handles the login handshake (including MOTD pager screens) and keeps the character safely connected between commands, which a fire-and-forget connection cannot do.
+description: Play tbaMUD (a CircleMUD/DikuMUD-derived text adventure) running on localhost:4000 using the existing "dummy" character. Use this skill whenever the user asks to explore, play, log into, or interact with the MUD, the game on port 4000, tbaMUD, CircleMUD, or "the dummy character" — including requests like "go explore the mud," "level up my character," "see what's in the bakery," "fight some rats," "check on the dummy account," or longer-running goals like "get dummy to level 7" or "go kill the swamp troll" that may span more than one conversation. This skill keeps persistent notes in data/player.md and data/world.md so goals and world knowledge survive between sessions — check those files whenever the user references earlier MUD progress ("how's the leveling going," "keep going," "did we ever find that shop"). Do not attempt to talk to the MUD with raw telnet/nc commands or one-off socket scripts — this skill's daemon handles the login handshake (including MOTD pager screens) and keeps the character safely connected between commands, which a fire-and-forget connection cannot do.
 ---
 
 # Playing tbaMUD
@@ -10,6 +10,59 @@ Multi-User Dungeon) over a raw TCP socket. There is exactly **one** shared
 test character, `dummy` / `helloworld`, so treat it like a shared resource:
 other people may be using or reviewing this same character, and its state
 (inventory, gold, location, whether it's alive) persists across sessions.
+
+## Long-term memory: data/player.md and data/world.md
+
+`dummy`'s state in the game world outlives any single conversation, and so
+can the user's goals — "get to level 7" or "go kill the swamp troll" is
+realistically a multi-session project. To make that possible, this skill
+keeps two markdown files next to `scripts/` as memory that survives after
+the daemon stops and the conversation ends:
+
+- **`data/player.md`** — dummy's own state: level, stats, equipment, gold,
+  last known location, and any active long-term goal along with its
+  progress (current level vs. target, mobs found vs. still searching for,
+  etc).
+- **`data/world.md`** — what's been learned about the game world: rooms
+  and their exits, shops and their prices, mobs and how dangerous they
+  are, quest hooks. There's no in-game map command and no bundled parser
+  (see below), so this file *is* the map — without it, every session
+  re-discovers Midgaard from scratch.
+
+**At the start of a session**, read both files before doing anything else,
+so you're not starting blind on a character/world you've already
+partially explored. If they're empty — brand new character, or this is
+the very first play session — that's expected; bootstrap them by running
+`score`, `inventory`, and `equipment` right after login and writing down
+what comes back, then fill in `world.md` as you explore.
+
+**While playing**, treat these as living notes, not a form to fill out
+once. Update them when something worth remembering happens: a level or
+equipment change, a newly discovered room/shop/NPC, progress toward an
+active goal, or something dangerous worth avoiding next time. Don't stop
+to edit a file after every single command — that wastes effort and slows
+down play — batch updates at natural checkpoints instead (leaving an area
+you spent time in, finishing a fight, hitting a milestone), the same way
+you'd batch status updates to the user.
+
+**When the user hands you a multi-step goal**, write it into `player.md`
+as an explicit active goal with whatever progress markers matter. That's
+what lets a *later* conversation — one with no memory of this one — read
+the goal back out of `player.md` and keep working toward it when the user
+says something as thin as "keep going" or "how's it coming along."
+
+**Trust the live game over stale notes.** If `world.md` says a room has
+an exit north but `look` shows otherwise, or `player.md` says dummy was
+last in the Armory but the game clearly disagrees, believe the game right
+now and correct the note — these files describe the world as of the last
+update, not necessarily the present, since other sessions or other people
+may have touched the shared character in between.
+
+Keep both files as plain prose you can skim quickly — a few headers
+(vitals, active goal, inventory for the player file; one entry per room
+or area for the world file) go a long way. Don't force a rigid schema
+onto them; what's worth recording varies a lot from session to session,
+and free text is easier to extend than a fixed template.
 
 ## Why this needs a daemon, not a one-off script
 
@@ -137,6 +190,12 @@ the next command, repeat. A few things worth watching for as you do:
   giving away gold, character deletion via menu option `5`) unless the
   user's request clearly calls for it — this is a shared character other
   people may be using for other purposes.
+- **If the goal spans more than this conversation** (leveling up several
+  times, hunting a specific mob that hasn't turned up yet), record it as
+  the active goal in `data/player.md` as soon as you understand it, and
+  update its progress at the checkpoints described above — see
+  [Long-term memory](#long-term-memory-dataplayermd-and-dataworldmd). That
+  way if the conversation ends mid-goal, the next one can pick it back up.
 
 ## Cleanup
 
@@ -147,6 +206,12 @@ Leaving the daemon running:
 - Risks the character sitting somewhere unsafe (mid-room, near hostile
   mobs) if a later, unrelated conversation starts a fresh session and
   gets confused by leftover state.
+
+Before stopping, make sure `data/player.md` and `data/world.md` reflect
+where things actually stand — current location, level, and active goal
+progress in particular. This is the handoff to whatever conversation
+picks the character up next, including one where the user doesn't
+re-explain the goal at all.
 
 If you started a daemon and the conversation is ending or moving to an
 unrelated task, stop it even if the user didn't explicitly ask.
