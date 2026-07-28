@@ -8,3 +8,8 @@
 # Ruby
 **/vendor/bundle
 **/.bundle
+
+# Python
+**/.venv
+**/__pycache__
+**/*.pyc
