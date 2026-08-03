@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+cd "$(dirname "$0")/../../python/02_the_registry"
+source .venv/bin/activate
+python examples/example.py
