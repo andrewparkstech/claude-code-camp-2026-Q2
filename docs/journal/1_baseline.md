@@ -22,6 +22,9 @@ This bootcamp is the first time I'm using Ruby. I thought I had fixed the issues
 
 I'm now using a version manager `mise` and installed Ruby 3.4.10.
 
+### Created a skill
+I did create a skill following the idea from API Client video. This worked well.
+
 ## Technical Hypotheses
 I expect we will have a better Player Agent than we did when using the models in preweek.
 
