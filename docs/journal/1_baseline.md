@@ -28,6 +28,9 @@ I did create a skill following the idea from API Client video. This worked well.
 ### Using the python port skill
 To port Agent Loop, I am using the skill I created. It found a pathing error for prompts dir and offered to fix it for the python port. However, it does seem to take longer than just asking Claude directly to port the code.
 
+### Created script to create script
+During 08 The Repl, I created a bash script in /bin that will generate a launcher script for the next Ruby program
+
 ## Technical Hypotheses
 I expect we will have a better Player Agent than we did when using the models in preweek.
 
